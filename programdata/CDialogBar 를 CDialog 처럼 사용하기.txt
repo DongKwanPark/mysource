@@ -1,0 +1,215 @@
+ [퍼옴] CDialogBar 를 CDialog 처럼 사용하기.   | ETC 2000-05-30 오후 4:30:16 
+ 
+서우석  번호: 569  / 읽음:2,934 
+
+ 올린이:gurus   (최성룡  )    
+ -----------------------------------------------------------------------------
+
+어제 밤에 뚝닥거리다가 알아낸건데 제법 쓸모있을것(?) 
+같아 이렇게 올립니다. ^^;
+CCalBar class의 .h/.cpp 안에 주석을 달았습니다.
+소스를 그냥 붙여서 올리는 거니까 다운받아 보세요. 
+
+----------------------------------------------------------------------------------
+// calbar.h
+
+#if !defined(AFX_CALBAR_H__1E82E2C9_D3C4_11D1_A4FF_00AA00C0AFD5__INCLUDED_)
+#define AFX_CALBAR_H__1E82E2C9_D3C4_11D1_A4FF_00AA00C0AFD5__INCLUDED_
+
+#if _MSC_VER >= 1000
+#pragma once
+#endif // _MSC_VER >= 1000
+// CalBar.h : header file
+//
+
+/* CDialogBar 를 CDialog 처럼 사용하기
+
+1.    리소스 에디트로 다이얼로그 템플릿을 만든다.
+    toolbar처럼 보이게 만든다(title을 없애고, thin으로, ...) 
+    style을 popup에서 child로 바꾼다.
+
+2.    new class로 새로운 클래스를 만든다. 
+    wizard가 CDialogBar를 지원하지 않으므로 base class를 generic CWnd로 선택한다.
+    생성후 .h/.cpp에 있는 CWnd를 CDialogBar로 모두 대체한다.
+    (public CWnd -> public CDialogBar, BEGIN_MESSAGE_MAP(..., CWnd -> CDialogBar))
+
+3.    class wizard가 사용하는 .clw 파일을 편집한다.
+    .clw파일을 열어 생성한 클래스의 이름 항목에 
+    BaseClass=CWnd -> CDialogBar로 변경하고,
+    Filter=W 를 Filter=D롤 바꾼다.
+    그럼 class wizird로 CDialog 함수를 추가할수 있다.
+
+4.    DDX/DDV를 사용하기 위해 
+     메세지 처리함수 afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM)를 추가하고
+    메세지 맵에서 WM_INITDIALOG와 매핑시킨다. - ON_MESSAGE(WM_INITDIALOG, HandleInitDialog)
+    HandleInitDialog 안에서 OninitDialog()를 호출하고, 
+    base인 CDialogBar::HandleInitDialog(wParam, lParam)를 호출한다.
+    DoDataExchange(...)를 오버로딩한다.
+    OnInitDialog()를 오버로딩하고 안에서 컨트로 초기작업과 UpdateData(FALSE)를 
+    호출한다.
+
+5.    //{{AFX_DATA(...)        //}}AFX_DATA        .h
+    //{{AFX_DATA_INIT(...)    //}}AFX_DATA_INIT    .cpp - ctor
+    //{{AFX_DATA_MAP(...)    //}}AFX_DATA_MAP    .cpp - DoDataExchage
+    를 추가하면 class wizard 로 member vairlabe을 추가할수 있다.
+
+6.  CMainFrame::OnCreate() 안에서 toolbar 처러 생성한다.
+
+7.    끝으로 위의 기능은 CDialog의 많은 부분이 CWnd 안에 구현되어 있기 때문에 
+    가능한것이다. 이렇게 만들면 직접코딩하는 번거러움을 많이 줄일수 있다.
+    툴바에 버튼외에 다른 컨트롤을 삽입하는것은 resourc edit의 도움을 받을수 없음므로
+    직접 코딩해야 되고, 버튼이 하나라도 있어야 제대로 출력된다.(크기 문제)
+*/
+
+#include "yearedit.h"
+
+/////////////////////////////////////////////////////////////////////////////
+// CCalBar window
+
+class CCalBar : public CDialogBar
+{
+// Construction
+public:
+    CCalBar();
+
+// Attributes
+public:
+    //{{AFX_DATA(CCalBar)
+    enum { IDD = IDD_CALBAR };
+    int m_nMonth;
+    int m_nYear;
+    CYearEdit    m_edit;
+    CComboBox    m_cbox;
+    CSpinButtonCtrl    m_spin;
+    //}}AFX_DATA
+
+// Operations
+public:
+
+// Overrides
+    // ClassWizard generated virtual function overrides
+    //{{AFX_VIRTUAL(CCalBar)
+    //}}AFX_VIRTUAL
+
+// Implementation
+protected:
+    virtual void DoDataExchange( CDataExchange* pDX );
+
+public:
+    bool InitInstance(CWnd* pParentWnd);
+    void GetDay(int& nYear, int& nMonth);
+    void SetDay(int nYear, int nMonth);
+    virtual ~CCalBar();
+
+    // Generated message map functions
+protected:
+    //{{AFX_MSG(CCalBar)
+    afx_msg LRESULT HandleInitDialog(WPARAM, LPARAM);
+    virtual BOOL OnInitDialog();
+    //}}AFX_MSG
+    DECLARE_MESSAGE_MAP()
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+//{{AFX_INSERT_LOCATION}}
+// Microsoft Developer Studio will insert additional declarations immediately before the previous line.
+
+#endif // !defined(AFX_CALBAR_H__1E82E2C9_D3C4_11D1_A4FF_00AA00C0AFD5__INCLUDED_)
+
+
+------------------------------------------------------------------------------
+
+// CalBar.cpp : implementation file
+//
+
+#include "stdafx.h"
+#include "cal.h"
+#include "CalBar.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+// CCalBar
+
+CCalBar::CCalBar()
+{
+    //{{AFX_DATA_INIT(CCalBar)
+    m_nYear = 1;
+    m_nMonth = 0;
+    //}}AFX_DATA_INIT
+}
+
+CCalBar::~CCalBar()
+{
+}
+
+
+BEGIN_MESSAGE_MAP(CCalBar, CDialogBar)
+    //{{AFX_MSG_MAP(CCalBar)
+    ON_MESSAGE(WM_INITDIALOG, HandleInitDialog)
+    //}}AFX_MSG_MAP
+END_MESSAGE_MAP()
+
+
+/////////////////////////////////////////////////////////////////////////////
+// CCalBar message handlers
+
+
+// CDialogBar 를 CDialog 처럼 사용하기 위해 OnInitDialog를 호출한다.
+// CDialog 역시 이런식으로 구성되어 있다.
+LRESULT CCalBar::HandleInitDialog(WPARAM wParam, LPARAM lParam)
+{
+    OnInitDialog();
+
+    return CDialogBar::HandleInitDialog(wParam, lParam);
+}
+
+void CCalBar::DoDataExchange( CDataExchange* pDX )
+{
+    //{{AFX_DATA_MAP(CCalBar)
+    DDX_Control(pDX, IDW_MONTH, m_cbox);
+    DDX_Control(pDX, IDW_YEAR,  m_edit);
+    DDX_Control(pDX, IDW_YEAR_SELECT, m_spin);
+    DDX_Text(pDX, IDW_YEAR, m_nYear);
+    DDX_CBIndex(pDX, IDW_MONTH, m_nMonth);
+    //}}AFX_DATA_MAP
+}
+
+void CCalBar::SetDay(int nYear, int nMonth)
+{
+    /*
+    CString string;
+    string.Format("%d", nYear);
+    
+    m_edit.SetWindowText(string);
+    m_cbox.SetCurSel(nMonth - 1);
+    */
+    m_nYear = nYear;
+    m_nMonth = nMonth - 1;
+    UpdateData(FALSE);
+}
+
+
+BOOL CCalBar::OnInitDialog() 
+{
+    // TODO: Add extra initialization here
+    UpdateData(FALSE);
+
+    m_spin.SetRange(1, 3000);
+    m_cbox.SetCurSel(0);
+    
+    return TRUE;  
+}
+
+void CCalBar::GetDay(int & nYear, int & nMonth)
+{
+    UpdateData();
+    nYear = m_nYear;
+    nMonth = m_nMonth + 1;
+}
+ 
