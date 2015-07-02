@@ -1,0 +1,22 @@
+	int nCount = 0;
+	const int nFindNumber = 8;
+	const int nMaxNumber = 10000;
+
+	for(int nIndex = 1; nIndex <= nMaxNumber; nIndex++)
+	{
+		int nCurNumber = nIndex;
+
+		while( 1 )
+		{
+			int nUnit = nCurNumber % 10;	// 일의자리
+			if( nUnit != 0 && (nUnit % nFindNumber) == 0 )
+				nCount++;
+
+			nCurNumber = nCurNumber / 10;
+			if( nCurNumber == 0 ) break;
+		}
+	}
+
+	CString s;
+	s.Format("총 개수 = %d", nCount);
+	AfxMessageBox(s);
